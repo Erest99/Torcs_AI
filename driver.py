@@ -1,6 +1,9 @@
+import math
+
 import msgParser
 import carState
 import carControl
+import neat
 
 
 class Driver(object):
@@ -41,24 +44,57 @@ class Driver(object):
 
         return self.parser.stringify({'init': self.angles})
 
-    def drive(self, msg):
+    def drive(self, msg, ge, nets, i, config):
         self.state.setFromMsg(msg)
 
-        self.steer()
+        # fitness = distance from start - current lap time * koeficient - damage * koeficient
+        print("distance from start: " + str(self.state.distFromStart) + "\n")
+        print("current lap time: " + str(self.state.curLapTime) + "\n")
+        # TODO jedna funkce pro NN
 
-        self.gear()
+        ge[i].fitness = self.state.distFromStart - self.state.curLapTime * 2
+        data = [
+            self.state.angle,
+            self.state.damage,
+            self.state.fuel,
+            self.state.gear,
+            self.state.opponents,
+            self.state.racePos,
+            self.state.rpm,
+            self.state.speedX,
+            self.state.speedY,
+            self.state.speedZ,
+            self.state.track,
+            self.state.trackPos,
+            self.state.wheelSpinVel,
+            self.state.z,
+        ]
+        output = nets[i].activate(data)
+        if output[0] > math.pi/self.steer_lock: output[0] = math.pi/self.steer_lock
+        if output[0] < -math.pi/self.steer_lock: output[0] = -math.pi/self.steer_lock
+        self.control.setSteer(output[0])
+        if output[1] > 5: output[1] = 5
+        if output[1] < 1: output[1] = 1
+        self.control.setGear(round(output[1]))
+        if output[2] < 0: output[2] = 0
+        if output[2] > 1: output[2] = 1
+        self.control.setAccel(output[2])
 
-        self.speed()
+        # self.steer(genomes)
+        #
+        # self.gear(genomes)
+        #
+        # self.speed(genomes)
 
         return self.control.toMsg()
 
-    def steer(self):
+    def steer(self, genomes):
         angle = self.state.angle
         dist = self.state.trackPos
 
         self.control.setSteer((angle - dist * 0.5) / self.steer_lock)
 
-    def gear(self):
+    def gear(self, genomes):
         rpm = self.state.getRpm()
         gear = self.state.getGear()
         angle = self.state.angle
@@ -68,7 +104,7 @@ class Driver(object):
             up = True
         else:
             if gear < 1:
-                started =True
+                started = True
             if (self.prev_rpm - rpm) < 0:
                 up = True
             else:
@@ -82,7 +118,7 @@ class Driver(object):
 
         self.control.setGear(gear)
 
-    def speed(self):
+    def speed(self, genomes):
         speed = self.state.getSpeedX()
         accel = self.control.getAccel()
 
