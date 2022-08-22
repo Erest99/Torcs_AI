@@ -3,6 +3,7 @@ import math
 import msgParser
 import carState
 import carControl
+
 import neat
 
 
@@ -48,34 +49,67 @@ class Driver(object):
         self.state.setFromMsg(msg)
 
         # fitness = distance from start - current lap time * koeficient - damage * koeficient
-        print("distance from start: " + str(self.state.distFromStart) + "\n")
-        print("current lap time: " + str(self.state.curLapTime) + "\n")
-        # TODO jedna funkce pro NN
+        # print("distance from start: " + str(self.state.distRaced) + "\n")
+        # print("current lap time: " + str(self.state.curLapTime) + "\n")
 
-        ge[i].fitness = self.state.distFromStart - self.state.curLapTime * 2
+        # ge[i].fitness = self.state.distFromStart - self.state.curLapTime * 2
+        # ge[i].fitness = self.state.distRaced - 100 * self.state.curLapTime - 10 * self.state.damage
+        # print("fitness: " + str(ge[i].fitness) + " distance score: " + str(self.state.distRaced) + " time score: " + str(
+        #     -100 * self.state.curLapTime) + " damage score: " + str(-30 * self.state.damage) + " \n")
+
+        ge[i].fitness = self.state.distRaced - 30 * self.state.curLapTime
+        if self.state.damage > 1000: ge[i].fitness = -100000
+
         data = [
-            self.state.angle,
-            self.state.damage,
-            self.state.fuel,
+            int(self.state.angle * 100),
+            int(self.state.damage),
+            int(self.state.fuel * 10),
             self.state.gear,
-            self.state.opponents,
-            self.state.racePos,
-            self.state.rpm,
-            self.state.speedX,
-            self.state.speedY,
-            self.state.speedZ,
-            self.state.track,
-            self.state.trackPos,
-            self.state.wheelSpinVel,
-            self.state.z,
+            # self.state.opponents,
+            # self.state.racePos,
+            int(self.state.rpm),
+            int(self.state.speedX),
+            int(self.state.speedY),
+            int(self.state.speedZ),
+            int(self.state.track[0]),
+            int(self.state.track[1]),
+            int(self.state.track[2]),
+            int(self.state.track[3]),
+            int(self.state.track[4]),
+            int(self.state.track[5]),
+            int(self.state.track[6]),
+            int(self.state.track[7]),
+            int(self.state.track[8]),
+            int(self.state.track[9]),
+            int(self.state.track[10]),
+            int(self.state.track[11]),
+            int(self.state.track[12]),
+            int(self.state.track[13]),
+            int(self.state.track[14]),
+            int(self.state.track[15]),
+            int(self.state.track[16]),
+            int(self.state.track[17]),
+            int(self.state.track[18]),
+            int(self.state.trackPos),
+            int(self.state.wheelSpinVel[0]),
+            int(self.state.wheelSpinVel[1]),
+            int(self.state.wheelSpinVel[2]),
+            int(self.state.wheelSpinVel[3]),
+            int(self.state.z),
         ]
         output = nets[i].activate(data)
-        if output[0] > math.pi/self.steer_lock: output[0] = math.pi/self.steer_lock
-        if output[0] < -math.pi/self.steer_lock: output[0] = -math.pi/self.steer_lock
-        self.control.setSteer(output[0])
-        if output[1] > 5: output[1] = 5
-        if output[1] < 1: output[1] = 1
-        self.control.setGear(round(output[1]))
+        if output[0] > math.pi / self.steer_lock: output[0] = math.pi / self.steer_lock
+        if output[0] < -math.pi / self.steer_lock: output[0] = -math.pi / self.steer_lock
+        self.control.setSteer(output[0]*math.pi)
+        print("gear: "+ str(output[1]*5))
+        print("speedX: "+ str(self.state.speedX))
+        print("speedY: "+ str(self.state.speedY))
+        print("speedZ: "+ str(self.state.speedZ))
+        gear = output[1]*5
+        # if gear > 5: gear = 5
+        if gear < 0: gear = 0
+
+        self.control.setGear(round(gear))
         if output[2] < 0: output[2] = 0
         if output[2] > 1: output[2] = 1
         self.control.setAccel(output[2])
@@ -88,53 +122,111 @@ class Driver(object):
 
         return self.control.toMsg()
 
-    def steer(self, genomes):
-        angle = self.state.angle
-        dist = self.state.trackPos
+    def testdrive(self, msg, best):
 
-        self.control.setSteer((angle - dist * 0.5) / self.steer_lock)
+        self.state.setFromMsg(msg)
+        data = [
+            int(self.state.angle * 100),
+            int(self.state.damage),
+            int(self.state.fuel * 10),
+            self.state.gear,
+            # self.state.opponents,
+            # self.state.racePos,
+            int(self.state.rpm),
+            int(self.state.speedX),
+            int(self.state.speedY),
+            int(self.state.speedZ),
+            int(self.state.track[0]),
+            int(self.state.track[1]),
+            int(self.state.track[2]),
+            int(self.state.track[3]),
+            int(self.state.track[4]),
+            int(self.state.track[5]),
+            int(self.state.track[6]),
+            int(self.state.track[7]),
+            int(self.state.track[8]),
+            int(self.state.track[9]),
+            int(self.state.track[10]),
+            int(self.state.track[11]),
+            int(self.state.track[12]),
+            int(self.state.track[13]),
+            int(self.state.track[14]),
+            int(self.state.track[15]),
+            int(self.state.track[16]),
+            int(self.state.track[17]),
+            int(self.state.track[18]),
+            int(self.state.trackPos),
+            int(self.state.wheelSpinVel[0]),
+            int(self.state.wheelSpinVel[1]),
+            int(self.state.wheelSpinVel[2]),
+            int(self.state.wheelSpinVel[3]),
+            int(self.state.z),
+        ]
+        output = best.activate(data)
+        if output[0] > math.pi / self.steer_lock: output[0] = math.pi / self.steer_lock
+        if output[0] < -math.pi / self.steer_lock: output[0] = -math.pi / self.steer_lock
+        self.control.setSteer(output[0]*math.pi)
+        gear = output[1]*5
+        # if gear > 5: gear = 5
+        if gear < 0: gear = 0
 
-    def gear(self, genomes):
-        rpm = self.state.getRpm()
-        gear = self.state.getGear()
-        angle = self.state.angle
-        started = False
+        self.control.setGear(round(gear))
+        if output[2] < 0: output[2] = 0
+        if output[2] > 1: output[2] = 1
+        self.control.setAccel(output[2])
 
-        if self.prev_rpm is None:
-            up = True
-        else:
-            if gear < 1:
-                started = True
-            if (self.prev_rpm - rpm) < 0:
-                up = True
-            else:
-                up = False
+        return self.control.toMsg()
 
-        if up and rpm > 7000:
-            gear += 1
-
-        if not up and rpm < 3000 and -1 < angle < 1 and started:
-            gear -= 1
-
-        self.control.setGear(gear)
-
-    def speed(self, genomes):
-        speed = self.state.getSpeedX()
-        accel = self.control.getAccel()
-
-        if speed < self.max_speed:
-            accel += 0.1
-            if accel > 1:
-                accel = 1.0
-        else:
-            accel -= 0.1
-            if accel < 0:
-                accel = 0.0
-
-        self.control.setAccel(accel)
+    # def steer(self, genomes):
+    #     angle = self.state.angle
+    #     dist = self.state.trackPos
+    #
+    #     self.control.setSteer((angle - dist * 0.5) / self.steer_lock)
+    #
+    # def gear(self, genomes):
+    #     rpm = self.state.getRpm()
+    #     gear = self.state.getGear()
+    #     angle = self.state.angle
+    #     started = False
+    #
+    #     if self.prev_rpm is None:
+    #         up = True
+    #     else:
+    #         if gear < 1:
+    #             started = True
+    #         if (self.prev_rpm - rpm) < 0:
+    #             up = True
+    #         else:
+    #             up = False
+    #
+    #     if up and rpm > 7000:
+    #         gear += 1
+    #
+    #     if not up and rpm < 3000 and -1 < angle < 1 and started:
+    #         gear -= 1
+    #
+    #     self.control.setGear(gear)
+    #
+    # def speed(self, genomes):
+    #     speed = self.state.getSpeedX()
+    #     accel = self.control.getAccel()
+    #
+    #     if speed < self.max_speed:
+    #         accel += 0.1
+    #         if accel > 1:
+    #             accel = 1.0
+    #     else:
+    #         accel -= 0.1
+    #         if accel < 0:
+    #             accel = 0.0
+    #
+    #     self.control.setAccel(accel)
 
     def onShutDown(self):
+        print("best lap: " + str(self.state.lastLapTime))
+
         pass
 
     def onRestart(self):
+        print("best lap: " + str(self.state.lastLapTime))
         pass
