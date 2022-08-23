@@ -298,7 +298,7 @@ def testai():
 
 def run_neat(config):
     # load from  checkpoint
-    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-69')
+    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-92')
     p = neat.Population(config)
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()

@@ -49,10 +49,10 @@ num_inputs              = 33
 num_outputs             = 3
 
 # node response options
-response_init_mean      = 1.0
+response_init_mean      = 0.5
 response_init_stdev     = 0.0
-response_max_value      = 30.0
-response_min_value      = -30.0
+response_max_value      = 1.0
+response_min_value      = -1.0
 response_mutate_power   = 0.0
 response_mutate_rate    = 0.0
 response_replace_rate   = 0.0

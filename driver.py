@@ -100,13 +100,15 @@ class Driver(object):
         output = nets[i].activate(data)
         if output[0] > math.pi / self.steer_lock: output[0] = math.pi / self.steer_lock
         if output[0] < -math.pi / self.steer_lock: output[0] = -math.pi / self.steer_lock
+
+        gear = abs(output[1]*2.5)
         self.control.setSteer(output[0]*math.pi)
-        print("gear: "+ str(output[1]*5))
+        print("gear: "+ str(round(gear)))
         print("speedX: "+ str(self.state.speedX))
         print("speedY: "+ str(self.state.speedY))
         print("speedZ: "+ str(self.state.speedZ))
-        gear = output[1]*5
-        # if gear > 5: gear = 5
+
+        if gear > 5: gear = 5
         if gear < 0: gear = 0
 
         self.control.setGear(round(gear))
@@ -166,8 +168,8 @@ class Driver(object):
         if output[0] > math.pi / self.steer_lock: output[0] = math.pi / self.steer_lock
         if output[0] < -math.pi / self.steer_lock: output[0] = -math.pi / self.steer_lock
         self.control.setSteer(output[0]*math.pi)
-        gear = output[1]*5
-        # if gear > 5: gear = 5
+        gear = abs(output[1]*2.5)
+        if gear > 5: gear = 5
         if gear < 0: gear = 0
 
         self.control.setGear(round(gear))
