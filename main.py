@@ -298,14 +298,14 @@ def testai():
 
 def run_neat(config):
     # load from  checkpoint
-    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-92')
+    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-580')
     p = neat.Population(config)
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
     p.add_reporter(neat.Checkpointer(5))
 
-    best = p.run(eval_genomes, 70)
+    best = p.run(eval_genomes, 11)
     with open("best.pickle", "wb") as f:
         pickle.dump(best, f)
 
