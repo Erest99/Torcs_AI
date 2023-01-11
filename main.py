@@ -178,8 +178,8 @@ def testai():
                         help='Host IP address (default: localhost)')
     parser.add_argument('--port', action='store', type=int, dest='host_port', default=3001,
                         help='Host port number (default: 3001)')
-    parser.add_argument('--id', action='store', dest='id', default='SCR',
-                        help='Bot ID (default: SCR)')
+    parser.add_argument('--id', action='store', dest='id', default='SCR1',
+                        help='Bot ID (default: SCR1)')
     parser.add_argument('--maxEpisodes', action='store', dest='max_episodes', type=int, default=1,
                         help='Maximum number of learning episodes (default: 1)')
     parser.add_argument('--maxSteps', action='store', dest='max_steps', type=int, default=0,
@@ -298,14 +298,14 @@ def testai():
 
 def run_neat(config):
     # load from  checkpoint
-    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-580')
+    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-206')
     p = neat.Population(config)
     p.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
-    p.add_reporter(neat.Checkpointer(5))
+    p.add_reporter(neat.Checkpointer(1))
 
-    best = p.run(eval_genomes, 11)
+    best = p.run(eval_genomes, 2)
     with open("best.pickle", "wb") as f:
         pickle.dump(best, f)
 
