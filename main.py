@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 '''
-Created on Apr 4, 2012
+Message communication and parser created on Apr 4, 2012
 @author: lanquarden
 '''
 import sys
@@ -15,6 +15,11 @@ import sys
 import neat
 import os
 from pynput.mouse import Button, Controller as MouseController
+from pynput.keyboard import Key, Controller as KeyController
+import pywinauto
+import subprocess
+import pyautogui
+import win32gui
 
 
 def eval_genomes(genomes, config):
@@ -22,7 +27,8 @@ def eval_genomes(genomes, config):
     i = -1
     ge = []
     nets = []
-    print(str(i+2))
+    print(str(i + 2))
+    counter = 0
 
     for genome_id, genome in genomes:
         ge.append(genome)
@@ -30,11 +36,14 @@ def eval_genomes(genomes, config):
         nets.append(net)
         genome.fitness = 0
 
+
         # Configure the argument parser
         parser = argparse.ArgumentParser(description='Python client to connect to the TORCS SCRC server.')
 
+        # parser.add_argument('--host', action='store', dest='host_ip', default='localhost',
+        #                     help='Host IP address (default: localhost)')
         parser.add_argument('--host', action='store', dest='host_ip', default='localhost',
-                            help='Host IP address (default: localhost)')
+                            help='Host IP address (default: 172.17.0.0)')
         parser.add_argument('--port', action='store', type=int, dest='host_port', default=3001,
                             help='Host port number (default: 3001)')
         parser.add_argument('--id', action='store', dest='id', default='SCR',
@@ -154,19 +163,21 @@ def eval_genomes(genomes, config):
 
         sock.close()
 
-        mouse = MouseController()
+        # app = pywinauto.Application(backend='uia').connect(title='wtorcs.exe', timeout=1)
+        # window = app["wtorcs.exe"]
+        # window.set_focus()
+        # window.type_keys('{ENTER}', with_spaces=True)
+        # window.type_keys('{ENTER}', with_spaces=True)
+        # app.disconnect()
+
+        win32gui.SetActiveWindow(desktop_window_handle)
+        pyautogui.press('enter')
         time.sleep(1)
+        pyautogui.press('enter')
+        # runDocker()
 
-        mouse.position = (320, 460)
-        mouse.press(Button.left)
-        mouse.release(Button.left)
-
-        mouse.position = (320, 120)
-        mouse.press(Button.left)
-        mouse.release(Button.left)
 
 def testai():
-
     with open("best.pickle", "rb") as f:
         best = pickle.load(f)
     best_net = neat.nn.FeedForwardNetwork.create(best, config)
@@ -298,19 +309,89 @@ def testai():
 
 def run_neat(config):
     # load from  checkpoint
-    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-206')
+    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-1000')
+    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-750')
+    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-500')
+    #p = neat.Checkpointer.restore_checkpoint('neat-checkpoint-250')
     p = neat.Population(config)
     p.add_reporter(neat.StdOutReporter(True))
+
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
     p.add_reporter(neat.Checkpointer(1))
 
-    best = p.run(eval_genomes, 2)
+    print("checkpoint 2")
+
+    counter = 0
+    best = p.run(eval_genomes, 251)
     with open("best.pickle", "wb") as f:
         pickle.dump(best, f)
 
 
+def run_torcs(start):
+    win32gui.SetActiveWindow(desktop_window_handle)
+    print('opening TORCS')
+    if (start):
+        subprocess.Popen(['start_torcs.bat'], shell=True)
+    time.sleep(10)
+    time.sleep(15)
+    print('setting TORCS')
+    pyautogui.press('enter')
+    time.sleep(1)
+    pyautogui.press('enter')
+    time.sleep(1)
+    pyautogui.press('down')
+    time.sleep(1)
+    pyautogui.press('enter')
+    time.sleep(1)
+    pyautogui.press('enter')
+    time.sleep(1)
+    pyautogui.press('enter')
+    time.sleep(1)
+    pyautogui.press('down')
+    time.sleep(1)
+    pyautogui.press('right')
+    time.sleep(1)
+    pyautogui.press('delete')
+    time.sleep(1)
+    pyautogui.press('down')
+    time.sleep(1)
+    pyautogui.press('enter')
+    time.sleep(1)
+    pyautogui.press('up')
+    time.sleep(1)
+    pyautogui.press('enter')
+
+
+def runDocker():
+
+    # Replace this with the full path to the directory where you extracted the TORCS game data
+    torcs_data_dir = r"C:\Program Files (x86)\torcs"
+
+    # Replace this with the full path to the race configuration XML file you downloaded
+    race_config_file = r"C:\Program Files (x86)\torcs\config\raceman\quickrace.xml"
+
+    # Build the Docker command to run the TORCS server
+    docker_command = ["docker", "run", "-p", "3001:3001", "-v", f"{torcs_data_dir}:/root/.torcs", "-v",
+                      f"{race_config_file}:/torcs_server_config/race_config.xml", "tkpgamification/torcs_server", "-l",
+                      "1", "-r", "1", "-c", "/torcs_server_config/race_config.xml"]
+
+    # Use the 'runas' command to run the Docker command as admin
+    runas_command = ["runas", "/user:Administrator"] + docker_command
+
+    try:
+        output = subprocess.check_output(runas_command, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        output = e.output
+        print(f"Error running Docker command: {e}")
+    print(output.decode())
+
+
 if __name__ == '__main__':
+    # mouse = MouseController()
+    # keyboard = KeyController()
+
+    desktop_window_handle = win32gui.FindWindow("Progman", "Program Manager")
     local_dir = os.path.dirname(__file__)
     config_path = os.path.join(local_dir, 'config.txt')
 
@@ -320,8 +401,13 @@ if __name__ == '__main__':
         neat.DefaultSpeciesSet,
         neat.DefaultStagnation,
         config_path)
-    value = input("Train/Test?\n")
-    if value == "Train":
+    value = input("NoStart(0)/Train(1)/Test(2)?\n")
+    if value == "1":
+        app = run_torcs(True)
+        run_neat(config)
+    elif value == "0":
+        runDocker()
         run_neat(config)
     else:
+        # app = run_torcs(False)
         testai()

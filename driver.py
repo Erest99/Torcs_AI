@@ -49,9 +49,9 @@ class Driver(object):
     def drive(self, msg, ge, nets, i, config):
         self.state.setFromMsg(msg)
 
-        ge[i].fitness = self.state.distRaced - 30 * self.state.curLapTime
+        ge[i].fitness = self.state.distRaced - 30 * self.state.curLapTime-self.state.damage
         if ge[i].fitness < -500:
-            ge[i].fitness = -100000
+            ge[i].fitness = -100000+self.state.distRaced
             self.control.setMeta(1)
 
         if float(self.state.wheelSpinVel[0]) >= 0:
@@ -148,11 +148,48 @@ class Driver(object):
             wheel4,
             float(self.state.z/100),
         ]
+
+        print("inputs:")
+        print("angle: "+str(data[0]))
+        print("damage: "+str(data[1]))
+        print("fuel: "+str(data[2]))
+        print("gear: "+str(data[3]))
+        print("rpm: "+str(data[4]))
+        print("speedx: "+str(data[5]))
+        print("speedy: "+str(data[6]))
+        print("speedz: "+str(data[7]))
+        print("track0: "+str(data[8]))
+        print("track1: "+str(data[9]))
+        print("track2: "+str(data[10]))
+        print("track3: "+str(data[11]))
+        print("track4: "+str(data[12]))
+        print("track5: "+str(data[13]))
+        print("track6: "+str(data[14]))
+        print("track7: "+str(data[15]))
+        print("track8: "+str(data[16]))
+        print("track9: "+str(data[17]))
+        print("track10: "+str(data[18]))
+        print("track11: "+str(data[19]))
+        print("track12: "+str(data[20]))
+        print("track13: "+str(data[21]))
+        print("track14: "+str(data[22]))
+        print("track15: "+str(data[23]))
+        print("track16: "+str(data[24]))
+        print("track17: "+str(data[25]))
+        print("track18: "+str(data[26]))
+        print("trackpos: "+str(data[27]))
+        print("wheel1: "+str(data[28]))
+        print("wheel2: "+str(data[29]))
+        print("wheel3: "+str(data[30]))
+        print("wheel4: "+str(data[31]))
+        print("z: "+str(data[32]))
+
+
         output = nets[i].activate(data)
         # normalize = [abs(output[1]), abs(output[2])]
         # maximum = max(normalize)
-        output[1] = 1/abs(output[1])
-        output[2] = 1/abs(output[2])
+        output[1] = abs(output[1])*500
+        output[2] = abs(output[2])*500
         if output[0] > math.pi / self.steer_lock: output[0] = math.pi / self.steer_lock
         if output[0] < -math.pi / self.steer_lock: output[0] = -math.pi / self.steer_lock
         self.control.setSteer(output[0] * math.pi)
@@ -168,16 +205,22 @@ class Driver(object):
         # print("speedY: " + str(self.state.speedY))
         # print("speedZ: " + str(self.state.speedZ))
 
-        if self.state.rpm >6000: gear = gear+1
-        elif self.state.rpm < 1500: gear = gear-1
+        if self.state.rpm >7500: gear = gear+1
+        elif self.state.rpm < 1500+500*gear: gear = gear-1
         if gear > 6: gear = 6
         if gear < 1: gear = 1
 
         self.control.setGear(gear)
+
+
+        if output[1] > 1: ge[i].fitness = ge[i].fitness - output[1] + 1
+        if output[1] < 0: ge[i].fitness = ge[i].fitness + output[1]
         if output[1] < 0: output[1] = 0
         if output[1] > 1: output[1] = 1
         self.control.setAccel(output[1])
 
+        if output[2] > 1: ge[i].fitness = ge[i].fitness - output[2] + 1
+        if output[2] < 0: ge[i].fitness = ge[i].fitness + output[2]
         if output[2] < 0: output[2] = 0
         if output[2] > 1: output[2] = 1
         self.control.setBrake(output[2])
@@ -286,8 +329,8 @@ class Driver(object):
         output = best.activate(data)
         # normalize = [abs(output[1]), abs(output[2])]
         # maximum = max(normalize)
-        output[1] = 1/abs(output[1])
-        output[2] = 1/abs(output[2])
+        output[1] = abs(output[1])*500
+        output[2] = abs(output[2])*500
         if output[0] > math.pi / self.steer_lock: output[0] = math.pi / self.steer_lock
         if output[0] < -math.pi / self.steer_lock: output[0] = -math.pi / self.steer_lock
         self.control.setSteer(output[0] * math.pi)
@@ -303,7 +346,7 @@ class Driver(object):
         # print("speedY: " + str(self.state.speedY))
         # print("speedZ: " + str(self.state.speedZ))
 
-        if self.state.rpm > 6000:
+        if self.state.rpm > 7500:
             gear = gear + 1
         elif self.state.rpm < 1500:
             gear = gear - 1
@@ -311,6 +354,8 @@ class Driver(object):
         if gear < 1: gear = 1
 
         self.control.setGear(gear)
+
+
         if output[1] < 0: output[1] = 0
         if output[1] > 1: output[1] = 1
         self.control.setAccel(output[1])
